@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* StarScholar runs dark everywhere — the landing sets the tone and the
+/* StarScholar runs dark everywhere, the landing sets the tone and the
    check/my/login pages match it. The `dark` class on <html> forces every
    Tailwind dark: variant on. */
 @custom-variant dark (&:where(.dark, .dark *));

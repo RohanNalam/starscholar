@@ -69,7 +69,7 @@ export default function MyListPage() {
 
       <h1 className="text-3xl font-bold">My List</h1>
       <p className="mt-1 text-sm opacity-70">
-        Every video you check while signed in lands here automatically — private to you.
+        Anything you look up while signed in gets saved here. Only you can see it.
       </p>
 
       <div className="mt-8">
@@ -77,7 +77,7 @@ export default function MyListPage() {
 
         {state === "unconfigured" && (
           <div className="rounded-2xl border border-black/10 p-5 text-sm opacity-70 dark:border-white/15">
-            Accounts aren&apos;t set up yet — the site owner needs to add Supabase keys to{" "}
+            Accounts aren&apos;t set up yet, the site owner needs to add Supabase keys to{" "}
             <code>.env.local</code>.
           </div>
         )}
@@ -100,7 +100,7 @@ export default function MyListPage() {
             <Link href="/" className="underline">
               Check your first video
             </Link>{" "}
-            — it&apos;ll show up here automatically.
+           , it&apos;ll show up here automatically.
           </div>
         )}
 

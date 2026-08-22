@@ -22,10 +22,10 @@ function makeClient() {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// ── Local LLM (Ollama) — free, unlimited, runs on the user's own GPU ────────
+// ── Local LLM (Ollama), free, unlimited, runs on the user's own GPU ────────
 // Text-only jobs (caption extraction, page verification) try the local model
-// first; any failure — unavailable, timeout, or output that doesn't validate
-// against the schema — escalates to Gemini. Video-watching always uses Gemini.
+// first; any failure, unavailable, timeout, or output that doesn't validate
+// against the schema, escalates to Gemini. Video-watching always uses Gemini.
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen3:8b";
 
@@ -41,7 +41,7 @@ async function ollamaAvailable(): Promise<boolean> {
       data.models?.some((m) => m.name === OLLAMA_MODEL || m.name.startsWith(`${OLLAMA_MODEL}`))
     );
     if (!ollamaReady) {
-      console.warn(`Ollama is running but model "${OLLAMA_MODEL}" isn't pulled — using Gemini`);
+      console.warn(`Ollama is running but model "${OLLAMA_MODEL}" isn't pulled, using Gemini`);
     }
   } catch {
     ollamaReady = false;
@@ -68,7 +68,7 @@ async function generateLocal<T>(
       format: z.toJSONSchema(schema), // Ollama constrains output to the schema
       options: { temperature: 0, num_predict: maxTokens },
     }),
-    signal: AbortSignal.timeout(150000), // local models are slower — give room
+    signal: AbortSignal.timeout(150000), // local models are slower, give room
   });
   if (!res.ok) throw new Error(`Ollama ${res.status}`);
   const data = (await res.json()) as { message?: { content?: string } };
@@ -78,7 +78,7 @@ async function generateLocal<T>(
 }
 
 // One structured call: JSON schema enforced by the API, validated again by Zod.
-// `parts` may include inline media (image or video) alongside text — Gemini is
+// `parts` may include inline media (image or video) alongside text, Gemini is
 // multimodal, so reading a cover image or watching a video is the same call.
 async function generateStructured<T>(
   schema: z.ZodType<T>,
@@ -99,7 +99,7 @@ async function generateStructured<T>(
       );
     } catch (e) {
       console.warn(
-        `Local LLM (${OLLAMA_MODEL}) failed — escalating to Gemini:`,
+        `Local LLM (${OLLAMA_MODEL}) failed, escalating to Gemini:`,
         e instanceof Error ? e.message.slice(0, 200) : e
       );
     }
@@ -134,12 +134,12 @@ async function generateStructured<T>(
     } catch (e) {
       lastError = e;
       console.warn(
-        `Gemini ${attempt.model} failed (${e instanceof Error ? e.message.slice(0, 200) : e}) — trying next model…`
+        `Gemini ${attempt.model} failed (${e instanceof Error ? e.message.slice(0, 200) : e}), trying next model…`
       );
     }
   }
   throw new Error(
-    `The AI model couldn't process this right now — try again in a minute. (detail: ${
+    `The AI model couldn't process this right now, try again in a minute. (detail: ${
       lastError instanceof Error ? lastError.message.slice(0, 300) : String(lastError)
     })`
   );
@@ -158,7 +158,7 @@ export async function extractOpportunity(
     media?.kind === "video"
       ? "You are given the actual video file. Watch it: use the spoken audio, every on-screen text overlay, and anything shown visually. Captions are often engagement bait ('comment for the link!') while the real details are spoken or shown on screen. "
       : media?.kind === "image"
-        ? "You are given the video's cover image — read any text overlaid on it; creators usually put the hook there. "
+        ? "You are given the video's cover image, read any text overlaid on it; creators usually put the hook there. "
         : "";
 
   const parts: Part[] = [];
@@ -166,16 +166,16 @@ export async function extractOpportunity(
   parts.push({
     text:
       `Video caption${author ? ` (posted by ${author})` : ""}: ` +
-      (caption ? `\n\n${caption}` : "(none — the creator left the caption empty)"),
+      (caption ? `\n\n${caption}` : "(none, the creator left the caption empty)"),
   });
 
   return generateStructured(
     ExtractionSchema,
     "You extract structured facts about scholarships, internships, jobs, summer programs, and fellowships from short-form social videos. " +
       mediaNote +
-      "Videos often list SEVERAL opportunities ('5 internships you need to apply to!') — return one entry per distinct opportunity, in the order presented. " +
-      "Only report what the content actually says — a field it doesn't state is null. Never guess deadlines, amounts, or program names from your own knowledge. " +
-      "IMPORTANT: if the video shows a website address on screen, says one aloud, or the caption contains one, capture it in mentioned_url — that's where viewers are being sent. " +
+      "Videos often list SEVERAL opportunities ('5 internships you need to apply to!'), return one entry per distinct opportunity, in the order presented. " +
+      "Only report what the content actually says, a field it doesn't state is null. Never guess deadlines, amounts, or program names from your own knowledge. " +
+      "IMPORTANT: if the video shows a website address on screen, says one aloud, or the caption contains one, capture it in mentioned_url, that's where viewers are being sent. " +
       "Each search_query should target that opportunity's official application page for the current cycle.",
     parts,
     4096
@@ -328,7 +328,7 @@ async function fetchPageRaw(url: string): Promise<string | null> {
 
 // Every opportunity in a video runs its own search, and their results overlap
 // heavily (one aggregator page shows up for all five internships). Memoising by
-// URL turns those duplicates into a single fetch — and because the promise is
+// URL turns those duplicates into a single fetch, and because the promise is
 // cached before it settles, five parallel verifications share one request
 // rather than racing to make five.
 const PAGE_TTL_MS = 10 * 60 * 1000;
@@ -356,7 +356,7 @@ const renderCache = new Map<string, { at: number; value: Promise<string | null> 
 // shell. Jina's reader executes the page and returns its real content.
 // The direct fetch fails fast on a JS shell (it returns a near-empty page, it
 // doesn't hang), so this budget is only spent on pages that genuinely need
-// rendering — and cutting it too far costs verifications: Coursera and AWS
+// rendering, and cutting it too far costs verifications: Coursera and AWS
 // pages take longer than 12s and were coming back unverified without it.
 async function fetchRendered(url: string): Promise<string | null> {
   try {
@@ -390,12 +390,12 @@ export async function fetchPageText(url: string): Promise<string | null> {
 // portal) often sits one click deeper. Follow promising same-site links.
 export type SourcePage = { url: string; title: string; text: string };
 
-// "intern" must not match "international" — that alone pulled nasa.gov's
+// "intern" must not match "international", that alone pulled nasa.gov's
 // /international-space-station/ nav link in as a source page.
 const CRAWL_KEYWORDS =
   /apply|application|register|registration|admission|deadline|eligib|scholar|intern(?!ational)|fellow|program|20\d{2}/i;
 
-// never crawl static assets — images/styles/scripts have no facts to read
+// never crawl static assets, images/styles/scripts have no facts to read
 const ASSET_RE = /\.(png|jpe?g|gif|svg|webp|ico|css|js|mjs|pdf|zip|mp4|webm|woff2?|ttf|xml|json)(\?|$)/i;
 
 function rootDomain(url: string): string | null {
@@ -430,13 +430,13 @@ function sameSite(a: string, b: string): boolean {
   }
 }
 
-// links that scream "this is where you sign up" — worth following even to a
+// links that scream "this is where you sign up", worth following even to a
 // DIFFERENT domain (e.g. nasa.gov's page linking to stardance.hackclub.com)
 const STRONG_APPLY_RE = /apply|register|signup|sign-up|join|submit|enroll|portal|challenge/i;
 const SOCIAL_RE =
   /instagram\.com|facebook\.com|x\.com|twitter\.com|youtube\.com|youtu\.be|tiktok\.com|linkedin\.com|reddit\.com|discord\./i;
 
-// tokens from the program/org name — a link containing one is almost
+// tokens from the program/org name, a link containing one is almost
 // certainly the program's own site (e.g. "Stardance" → stardance.hackclub.com)
 export function nameTokens(...names: (string | null | undefined)[]): string[] {
   const tokens = new Set<string>();
@@ -477,7 +477,7 @@ export async function crawlFrom(
     return true;
   };
 
-  // 1. HIGHEST priority — links (any domain) whose URL contains the program's
+  // 1. HIGHEST priority, links (any domain) whose URL contains the program's
   //    own name. This is how nasa.gov's page leads us to stardance.hackclub.com.
   if (tokens.length > 0) {
     let added = 0;
@@ -497,7 +497,7 @@ export async function crawlFrom(
     }
   }
 
-  // 2. The site's HOMEPAGE — only when search surfaced an archive/subdomain
+  // 2. The site's HOMEPAGE, only when search surfaced an archive/subdomain
   //    page (archive.hackmit.org → hackmit.org). Skipped for pages already on
   //    the apex domain: nasa.gov's homepage would just waste a slot.
   for (const p of pages) {
@@ -511,7 +511,7 @@ export async function crawlFrom(
     }
   }
 
-  // 3. Same-site links that look like apply/deadline/FAQ pages (path only —
+  // 3. Same-site links that look like apply/deadline/FAQ pages (path only -
   //    query strings like ?search=Expedition%2064 are nav junk, not content).
   for (const p of pages) {
     for (const link of linksOf(p)) {
@@ -561,7 +561,7 @@ export async function verifyClaim(
     ? claimed.search_query
     : `${claimed.search_query} ${todayISO.slice(0, 4)}`;
 
-  // The site the video itself sent viewers to is the strongest lead — read it
+  // The site the video itself sent viewers to is the strongest lead, read it
   // first, in parallel with the web search.
   const mentionedPromise: Promise<SourcePage | null> = claimed.mentioned_url
     ? (async () => {
@@ -620,15 +620,15 @@ export async function verifyOpportunity(
       "You are given (a) claims made in a social media video and (b) the text of web pages found by searching for the official source. " +
       `Today's date is ${todayISO}. ` +
       "Rules: every fact in your output must come from the page text, not the video and not your own knowledge. " +
-      "A field the pages don't state is null or omitted — never guess. " +
+      "A field the pages don't state is null or omitted, never guess. " +
       "URLs must be copied verbatim from the provided page URLs or the [link: ...] markers in the page text. " +
-      "Pages titled '[linked by the creator]' are the video creator's own link — usually an aggregator blog, NOT the official source. " +
+      "Pages titled '[linked by the creator]' are the video creator's own link, usually an aggregator blog, NOT the official source. " +
       "Mine their [link: ...] markers to find the official/deep application links they point to, but never cite the aggregator itself as official_info_url or direct_application_url unless its domain belongs to the offering organization. " +
-      "Pages titled '[crawled]' were fetched by following links on those sites — they often hold the current apply page. " +
-      "Pages titled '[shown in the video]' are the site the video itself directed viewers to — if the other pages corroborate it as the program's own site, treat it as official and prefer it. " +
+      "Pages titled '[crawled]' were fetched by following links on those sites, they often hold the current apply page. " +
+      "Pages titled '[shown in the video]' are the site the video itself directed viewers to, if the other pages corroborate it as the program's own site, treat it as official and prefer it. " +
       "direct_application_url is where a student actually signs up or applies: prefer a form/portal URL; when the program has a dedicated site (its own domain or subdomain) and no deeper form URL exists in the pages, cite that site as direct_application_url. " +
       "CURRENT CYCLE ONLY: report details for the application cycle that is current relative to today's date. " +
-      "If the pages only describe a PAST cycle (dates or years clearly before today), do NOT present that cycle's deadline, dates, or requirements as current — set status 'unverified', say in status_reason that only past-cycle information was found, and leave deadline and deadline_iso null. " +
+      "If the pages only describe a PAST cycle (dates or years clearly before today), do NOT present that cycle's deadline, dates, or requirements as current, set status 'unverified', say in status_reason that only past-cycle information was found, and leave deadline and deadline_iso null. " +
       "Use 'expired' ONLY when the pages show the current cycle's own deadline has passed or the program is discontinued. " +
       "If none of the pages are clearly the official source, use status 'unverified'.",
     [

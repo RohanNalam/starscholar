@@ -1,4 +1,5 @@
 import type { CardData } from "@/lib/types";
+import { AddToCalendar } from "./add-to-calendar";
 
 export const STATUS_STYLES: Record<string, { badge: string; label: string; emoji: string }> = {
   verified: {
@@ -54,8 +55,9 @@ export function ResultCard({ r }: { r: CardData }) {
             Deadline
           </h2>
           <p className="text-lg font-medium">
-            {v.deadline ?? "Not listed — check the official page"}
+            {v.deadline ?? "Not listed, check the official page"}
           </p>
+          <AddToCalendar v={v} />
         </div>
         <div>
           <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide opacity-50">Links</h2>
@@ -141,7 +143,7 @@ export function ResultCard({ r }: { r: CardData }) {
               </a>
             </span>
           ))}{" "}
-          on {checked}. Always confirm details on the official site before applying.
+          on {checked}. Worth confirming on their site before you apply.
         </p>
       </div>
     </div>

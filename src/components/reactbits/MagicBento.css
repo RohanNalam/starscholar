@@ -1,4 +1,4 @@
-/* Adapted from React Bits MagicBento.css — variables scoped to .card-grid
+/* Adapted from React Bits MagicBento.css, variables scoped to .card-grid
    instead of :root so they can't leak into the rest of the app. */
 
 .card-grid {

@@ -13,7 +13,7 @@ const pExecFile = promisify(execFile);
 const MAX_BYTES = 19 * 1024 * 1024; // Gemini inline request cap is ~20MB
 
 // The dev server may have been launched before yt-dlp was installed, so PATH
-// alone isn't reliable — probe known locations too (winget links/packages).
+// alone isn't reliable, probe known locations too (winget links/packages).
 function ytDlpCandidates(): string[] {
   const c = [process.env.YTDLP_PATH, "yt-dlp"];
   const local = process.env.LOCALAPPDATA;
@@ -40,7 +40,7 @@ export async function resolveYtDlp(): Promise<string | null> {
     }
   }
   ytdlpBin = null;
-  console.warn("yt-dlp not found — video-watching rung disabled (set YTDLP_PATH to enable)");
+  console.warn("yt-dlp not found, video-watching rung disabled (set YTDLP_PATH to enable)");
   return ytdlpBin;
 }
 
@@ -60,7 +60,7 @@ export async function downloadVideo(
 
   const dir = await mkdtemp(path.join(tmpdir(), "starscholar-"));
   try {
-    // smallest available rendition — we only need legible text and audio
+    // smallest available rendition, we only need legible text and audio
     await pExecFile(
       bin,
       [

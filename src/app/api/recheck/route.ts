@@ -5,11 +5,11 @@ import type { VerifiedOpportunity } from "@/lib/types";
 
 // Freshness engine: re-verifies the stalest directory entries so statuses stay
 // honest (live links flip to expired the day they close). Call it on a
-// schedule — Vercel cron, GitHub Actions, or by hand:
+// schedule, Vercel cron, GitHub Actions, or by hand:
 //   GET /api/recheck?secret=<RECHECK_SECRET>
 export const maxDuration = 300;
 
-const BATCH = 8; // per run — keeps well inside free-tier quotas
+const BATCH = 8; // per run, keeps well inside free-tier quotas
 
 export async function GET(req: NextRequest) {
   const secret = process.env.RECHECK_SECRET;

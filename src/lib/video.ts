@@ -10,7 +10,7 @@ export type VideoText = {
   platform: "tiktok" | "instagram" | "youtube" | "unknown";
   caption: string | null;
   author: string | null;
-  thumbnail: string | null; // cover image URL — often has the hook text baked in
+  thumbnail: string | null; // cover image URL, often has the hook text baked in
 };
 
 const CHROME_UA =

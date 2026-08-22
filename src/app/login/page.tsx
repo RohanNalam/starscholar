@@ -30,7 +30,7 @@ function LoginInner() {
     if (error) {
       setError(
         error.message === "Invalid login credentials"
-          ? "Wrong email or password — or no account yet. Try “Create account” below."
+          ? "That email and password don't match, or you don't have an account yet. Try “Create account” below."
           : error.message
       );
     } else {
@@ -51,16 +51,16 @@ function LoginInner() {
     if (error) {
       setError(
         error.message.includes("rate limit")
-          ? "Creating an account still sends a confirmation email because “Confirm email” is enabled in Supabase — and the email quota is used up. Site owner: Supabase dashboard → Authentication → Sign In / Providers → Email → turn OFF “Confirm email”, then try again. (Or sign in above with an existing password — that never sends email.)"
+          ? "Signing up still sends a confirmation email because “Confirm email” is on in Supabase, and the email quota is used up. Site owner: go to Supabase, Authentication, Sign In / Providers, Email, and turn OFF “Confirm email”, then try again. (Or sign in above with an existing password, which never sends email.)"
           : error.message.includes("already registered")
-            ? "This email already has an account — use “Sign in” above with its password."
+            ? "That email already has an account. Sign in above with its password."
             : error.message
       );
     } else if (data.session) {
       router.push("/my");
     } else {
       setNotice(
-        "Account created — but email confirmation is on, so check your inbox. (Site owner: turn off “Confirm email” in Supabase → Authentication to make this instant.)"
+        "Account created. Email confirmation is on, so check your inbox. (Site owner: turn off “Confirm email” in Supabase under Authentication to make this instant.)"
       );
     }
   };
@@ -93,16 +93,16 @@ function LoginInner() {
 
       {!supabase ? (
         <div className="mt-8 rounded-2xl border border-black/10 p-5 text-sm opacity-70 dark:border-white/15">
-          Accounts aren&apos;t set up yet — the site owner needs to add Supabase keys to{" "}
+          Accounts aren&apos;t set up yet, the site owner needs to add Supabase keys to{" "}
           <code>.env.local</code>. Everything else works without signing in.
         </div>
       ) : sent ? (
         <div className="mt-8 rounded-2xl border border-green-300/50 bg-green-50 p-5 text-sm dark:bg-green-950/30">
           <p className="font-medium text-green-800 dark:text-green-300">
-            Check your email 📬 — tap the link inside to finish signing in.
+            Check your email 📬, tap the link inside to finish signing in.
           </p>
           <p className="mt-2 text-xs text-green-700 dark:text-green-400/80">
-            Open it on this same device and browser — the link only works where it was
+            Open it on this same device and browser, the link only works where it was
             requested. It expires after about an hour.
           </p>
         </div>
@@ -110,7 +110,7 @@ function LoginInner() {
         <div className="mt-8 space-y-3">
           {params.get("error") && (
             <p className="text-sm text-red-600 dark:text-red-400">
-              That sign-in link didn&apos;t work — it may have expired, or it was opened in a
+              That sign-in link didn&apos;t work, it may have expired, or it was opened in a
               different browser than the one that requested it.
             </p>
           )}

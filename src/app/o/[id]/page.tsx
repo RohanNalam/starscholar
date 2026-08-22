@@ -3,7 +3,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { ResultCard } from "@/components/result-card";
 import type { VerifiedOpportunity } from "@/lib/types";
 
-// Public, shareable page for one verified opportunity — each cached lookup
+// Public, shareable page for one verified opportunity, each cached lookup
 // becomes a durable page (and, once deployed, a search-indexable one).
 export default async function OpportunityPage({
   params,

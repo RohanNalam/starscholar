@@ -7,7 +7,7 @@ import { AuthNav } from "@/components/auth-nav";
 import MagicBento from "@/components/reactbits/MagicBento";
 import GlassSurface from "@/components/reactbits/GlassSurface";
 
-// WebGL hero background — client-only and lazy so it never blocks the page.
+// WebGL hero background, client-only and lazy so it never blocks the page.
 const Dither = dynamic(() => import("@/components/reactbits/Dither"), { ssr: false });
 
 export default function Home() {
@@ -51,8 +51,8 @@ export default function Home() {
               put in the caption.
             </h1>
             <p className="mt-5 max-w-md text-lg text-white/85 drop-shadow">
-              Paste any TikTok, Reel, or Short about a scholarship or internship — get the
-              verified application link, real deadline, and a step-by-step checklist.
+              Paste any TikTok, Reel, or Short about a scholarship or internship. You get the
+              real application link, the actual deadline, and what you need to do to apply.
             </p>
 
             <div className="mt-9 w-full max-w-xl">
@@ -103,8 +103,8 @@ export default function Home() {
       </section>
 
       <footer className="pb-10 text-center text-xs text-white/40">
-        StarScholar checks official sources in real time. Always confirm details on the
-        official site before applying.
+        We check the official source every time you ask. Still worth confirming on their site
+        before you apply.
       </footer>
     </main>
   );

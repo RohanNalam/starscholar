@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // ── Step 1: what Claude extracts from the video ─────────────────────────────
-// A video often lists SEVERAL opportunities ("5 internships you need!") — we
+// A video often lists SEVERAL opportunities ("5 internships you need!"), we
 // extract every one. Unknown fields are null: never a guess.
 export const ExtractedOpportunitySchema = z.object({
   type: z
@@ -24,7 +24,7 @@ export const ExtractedOpportunitySchema = z.object({
   search_query: z
     .string()
     .describe(
-      "The best Google search query to find the OFFICIAL page for this specific opportunity. ALWAYS include the offering organization's name when it is known — 'Artificial Intelligence Fundamentals' finds nothing useful, 'IBM SkillsBuild Artificial Intelligence Fundamentals' finds the real page. e.g. 'Google STEP internship 2026 application'"
+      "The best Google search query to find the OFFICIAL page for this specific opportunity. ALWAYS include the offering organization's name when it is known, 'Artificial Intelligence Fundamentals' finds nothing useful, 'IBM SkillsBuild Artificial Intelligence Fundamentals' finds the real page. e.g. 'Google STEP internship 2026 application'"
     ),
   mentioned_url: z
     .string()
@@ -78,7 +78,7 @@ export const VerificationSchema = z.object({
     .string()
     .nullable()
     .describe(
-      "The same deadline as an ISO date, format YYYY-MM-DD, only if the official page states an unambiguous date. Null otherwise — never guess the year."
+      "The same deadline as an ISO date, format YYYY-MM-DD, only if the official page states an unambiguous date. Null otherwise, never guess the year."
     ),
   eligibility: z
     .array(z.string())
@@ -108,11 +108,11 @@ export type Verification = z.infer<typeof VerificationSchema>;
 
 // ── What the API returns to the frontend ────────────────────────────────────
 // Exactly what the ResultCard component needs to render one opportunity.
-// Saved My List rows store this shape (older rows carry extra fields — fine).
+// Saved My List rows store this shape (older rows carry extra fields, fine).
 export type CardData = {
   verification: Verification;
   sources: { title: string; url: string }[];
-  checkedAt: string; // ISO date — "we verified this on ..."
+  checkedAt: string; // ISO date, "we verified this on ..."
 };
 
 export type VerifiedOpportunity = {
@@ -136,7 +136,7 @@ export type CheckResult = {
 export type CheckError = {
   ok: false;
   error: string;
-  needsCaption?: boolean; // true when we couldn't read the video — ask the user to paste the caption
+  needsCaption?: boolean; // true when we couldn't read the video, ask the user to paste the caption
 };
 
 // ── Streaming ───────────────────────────────────────────────────────────────

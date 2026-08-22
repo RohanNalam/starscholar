@@ -47,7 +47,7 @@ export default function BrowsePage() {
       .then(({ data, error }) => {
         if (error) {
           setError(
-            "Couldn't load the directory — has supabase/schema.sql been run in the SQL Editor?"
+            "Couldn't load the directory. Has supabase/schema.sql been run in the SQL Editor yet?"
           );
         } else {
           setRows(data ?? []);
@@ -83,7 +83,7 @@ export default function BrowsePage() {
 
       <h1 className="text-3xl font-bold">Browse opportunities</h1>
       <p className="mt-1 text-sm opacity-70">
-        Every opportunity anyone has ever checked — verified against official sources, sorted by
+        Every opportunity anyone has ever checked, verified against official sources, sorted by
         deadline. It grows with every lookup.
       </p>
 
@@ -128,7 +128,7 @@ export default function BrowsePage() {
           <div className="rounded-2xl border border-black/10 p-5 text-sm opacity-70 dark:border-white/15">
             {rows.length === 0 ? (
               <>
-                Nothing here yet — the directory fills up as people check videos.{" "}
+                Nothing here yet, the directory fills up as people check videos.{" "}
                 <Link href="/" className="underline">
                   Check the first one.
                 </Link>

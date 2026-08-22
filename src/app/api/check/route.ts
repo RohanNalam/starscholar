@@ -22,14 +22,14 @@ import { supabaseServer } from "@/lib/supabase/server";
 
 export const maxDuration = 120; // the video-watching rung needs headroom
 
-const MAX_OPPORTUNITIES = 5; // per video — bounds search credits and latency
+const MAX_OPPORTUNITIES = 5; // per video, bounds search credits and latency
 
 function err(message: string, status = 400, needsCaption = false) {
   const body: CheckError = { ok: false, error: message, needsCaption };
   return NextResponse.json(body, { status });
 }
 
-// Stage timings — printed per lookup so slow steps are visible instead of
+// Stage timings, printed per lookup so slow steps are visible instead of
 // hiding inside one long spinner.
 function stopwatch() {
   const t0 = Date.now();
@@ -43,7 +43,7 @@ function stopwatch() {
     },
     report(prefix: string) {
       console.log(
-        `[check] ${prefix} — ${marks.join(" · ")} · TOTAL ${((Date.now() - t0) / 1000).toFixed(1)}s`
+        `[check] ${prefix}, ${marks.join(" · ")} · TOTAL ${((Date.now() - t0) / 1000).toFixed(1)}s`
       );
     },
   };
@@ -70,18 +70,18 @@ async function* runCheck(
     return;
   }
   if (!process.env.GEMINI_API_KEY) {
-    yield fail("Server is missing GEMINI_API_KEY — add it to .env.local.", 500);
+    yield fail("The server is missing GEMINI_API_KEY. Add it to .env.local.", 500);
     return;
   }
   if (!hasSearchProvider()) {
     yield fail(
-      "Server has no search API key — add TAVILY_API_KEY (recommended, free at app.tavily.com) to .env.local.",
+      "The server has no search API key. Add TAVILY_API_KEY to .env.local, free at app.tavily.com.",
       500
     );
     return;
   }
 
-  // 0. Shared cache — if anyone already verified this video recently, serve it
+  // 0. Shared cache, if anyone already verified this video recently, serve it
   //    instantly: zero Gemini/Tavily quota, sub-second response.
   if (!pastedCaption && !refresh) {
     const cached = await readSharedCache(videoUrl);
@@ -94,7 +94,7 @@ async function* runCheck(
   }
 
   // 1. Fetch the platform metadata AND the video file itself, in parallel.
-  //    The caption/cover are hints; the video is ground truth — the details
+  //    The caption/cover are hints; the video is ground truth, the details
   //    usually live in the spoken audio and on-screen text, not in metadata.
   const timer = stopwatch();
   const [video, file] = await Promise.all([fetchVideoText(videoUrl), downloadVideo(videoUrl)]);
@@ -117,7 +117,7 @@ async function* runCheck(
     timer.mark("watch-video");
   }
 
-  // Fallback rungs — only when the video couldn't be downloaded (e.g. yt-dlp
+  // Fallback rungs, only when the video couldn't be downloaded (e.g. yt-dlp
   // missing on the server) or watching it identified nothing.
   if (!hasOpps(extraction)) {
     const thumbPart = video.thumbnail ? await fetchImagePart(video.thumbnail) : null;
@@ -141,7 +141,7 @@ async function* runCheck(
 
   if (!extraction) {
     yield fail(
-      "Couldn't read anything from this video automatically (the platform blocked us). Paste the caption text and try again.",
+      "We couldn't read anything off this video. The platform blocked us. Paste the caption text and try again.",
       422,
       true
     );
@@ -173,7 +173,7 @@ async function* runCheck(
     return;
   }
 
-  // 2. Follow links in the caption — creators' pages (often aggregator blogs)
+  // 2. Follow links in the caption, creators' pages (often aggregator blogs)
   //    usually deep-link the real application URLs. The verifier may mine
   //    them for official links but never cites them as official.
   const captionUrls = (caption?.match(/https?:\/\/[^\s"'<>)\]]+/g) ?? [])
@@ -196,7 +196,7 @@ async function* runCheck(
     )
   ).filter((p) => p.text.length > 200);
 
-  // 3. Verify every opportunity in parallel — each gets its own search,
+  // 3. Verify every opportunity in parallel, each gets its own search,
   //    official-page scrape, and fact-check. One failure never sinks the rest.
   const todayISO = checkedAt.slice(0, 10);
   timer.mark("creator-links");
@@ -231,7 +231,7 @@ async function* runCheck(
 
 const CACHE_FRESH_DAYS = 7;
 
-// Names currently stored for a video that this check didn't produce — leftovers
+// Names currently stored for a video that this check didn't produce, leftovers
 // from an earlier run that named the same program differently.
 async function staleNames(
   query: PromiseLike<{ data: { name: string | null }[] | null }>,
@@ -257,11 +257,11 @@ async function readSharedCache(videoUrl: string): Promise<CheckResult | null> {
 
     const newest = data.reduce((a, b) => (a.checked_at > b.checked_at ? a : b));
     const ageMs = Date.now() - new Date(newest.checked_at).getTime();
-    if (ageMs > CACHE_FRESH_DAYS * 24 * 3600 * 1000) return null; // stale — re-verify
+    if (ageMs > CACHE_FRESH_DAYS * 24 * 3600 * 1000) return null; // stale, re-verify
 
     // Every row a single check produces shares one checked_at, so keeping just
     // the newest batch drops rows left over from an earlier run that named the
-    // same program differently — otherwise one video looks like three.
+    // same program differently, otherwise one video looks like three.
     const batch = data.filter((row) => row.checked_at === newest.checked_at);
 
     return {
@@ -271,7 +271,7 @@ async function readSharedCache(videoUrl: string): Promise<CheckResult | null> {
       caption: newest.caption ?? null,
       author: newest.author ?? null,
       checkedAt: newest.checked_at,
-      analyzedWith: `${newest.analyzed_with ?? "a previous check"} — cached, verified ${new Date(newest.checked_at).toLocaleDateString()}`,
+      analyzedWith: `${newest.analyzed_with ?? "a previous check"}, cached, verified ${new Date(newest.checked_at).toLocaleDateString()}`,
       opportunities: batch.map((row) => row.result as VerifiedOpportunity),
     };
   } catch (e) {
@@ -286,7 +286,7 @@ async function writeSharedCache(result: CheckResult): Promise<void> {
   try {
     const supabase = await supabaseServer();
     if (!supabase) return;
-    // One upsert for every opportunity — a five-opportunity video used to cost
+    // One upsert for every opportunity, a five-opportunity video used to cost
     // five sequential round trips before the response could be returned.
     const rows = result.opportunities
       .filter((opp) => opp.verification)
@@ -418,7 +418,7 @@ async function saveAllToMyList(videoUrl: string, result: CheckResult): Promise<v
   }
 }
 
-// Replay the event stream into a single response — what the Shortcut, the
+// Replay the event stream into a single response, what the Shortcut, the
 // regression script, and any plain API caller get.
 async function buffered(events: AsyncGenerator<CheckEvent>) {
   let last: CheckResult | null = null;

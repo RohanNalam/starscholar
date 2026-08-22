@@ -1,121 +1,162 @@
-# ★ StarScholar
+# StarScholar
 
 **The link they never put in the caption.**
 
-Paste any TikTok / Instagram Reel / YouTube Short about a scholarship, internship,
-job, or summer program, and StarScholar:
+You have seen these videos. "This scholarship gives you $10,000 and nobody applies."
+"Google just opened applications for freshmen." Then you check the caption and there is
+no link, just "comment LINK and I'll send it," and 4,000 people in the replies asking
+for something that never arrives.
 
-1. **Watches the video** — Gemini reads the spoken audio and on-screen text, because
-   the details are almost never in the caption ("comment for the link!"). Falls back
-   to the caption + cover image when the video can't be downloaded
-2. Extracts *every* opportunity the video names (one video often lists five)
-3. Searches the web for the **official** page (Tavily / Brave / Serper — auto-detected),
-   then crawls that site for the page that actually holds the deadline and apply form
-4. Cross-checks the video's claims against the official page with Gemini
-5. Returns a card with a fact-check badge (🟢 verified / 🟡 exaggerated / 🔴 expired / ⚪ unverified),
-   the direct application link, the real deadline, eligibility, and a step-by-step
-   application checklist
+StarScholar takes that video and gives you the actual thing: where to apply, when it
+closes, whether you qualify, and which parts of the video were not true.
 
-Results **stream in as they're verified**: the opportunities are named within a few
-seconds and each card fills itself in as its own fact-check lands.
+## How it works
 
-## Setup
+Paste a TikTok, Instagram Reel, or YouTube Short. About twenty seconds later you get a
+card for every opportunity the video mentioned.
+
+Here is a real one. The video was about a NASA and Hack Club coding challenge:
+
+| | |
+|---|---|
+| **Status** | Exaggerated |
+| **Deadline** | September 30, 2026 |
+| **Apply** | stardance.hackclub.com |
+| **Cost** | Free |
+| **Who can apply** | Ages 13 to 18 |
+| **What the video got wrong** | It said winners get flown to San Francisco to present at AMD's AI conference. The official page does not offer that. It also said your project has to use real NASA data. It does not, you can build anything open source. |
+
+That last row is the point. The deadline and the link matter, but so does knowing the
+video oversold it before you spend a weekend on an application.
+
+## Why not just ask ChatGPT
+
+People try. Two things go wrong.
+
+The chatbot usually cannot see the video, because Instagram and TikTok block it. So it
+guesses from the URL and its training data, and it sounds confident either way.
+
+Even when it can see the video, it does not know today's deadline. Scholarship cycles
+reopen every year with new dates, and a model trained months ago will hand you last
+year's. Missing a deadline because something invented one is worse than getting no
+answer at all.
+
+StarScholar reads the official page while you wait and stamps the card with the date it
+checked. Everything on the card comes off that page. If the page does not say something,
+the card says it does not say, instead of filling in a plausible guess.
+
+## What the app has
+
+**Fact-check badges.** Green means the official page backs up the video. Yellow means
+something got left out, like a GPA cutoff or a citizenship requirement. Red means it
+already closed. Grey means we could not find an official page, and we tell you that
+rather than pretending.
+
+**Deep application links.** The info page is rarely the application. The real form is
+usually a click or two further in, on a portal like Submittable or Workday. StarScholar
+follows those links and gives you the one you actually need.
+
+**Add to calendar.** One tap puts the deadline in Google Calendar or Apple Calendar,
+with reminders a week out and the day before.
+
+**Deadline emails.** If you save something, you get an email when it is about to close.
+Once a week out, once the day before.
+
+**A saved list.** Sign in and everything you look up is kept for you. Nobody else can
+see it, and items drop off on their own once the deadline passes.
+
+**A public directory.** Every opportunity anyone has looked up is browsable at `/browse`,
+sorted by deadline, and rechecked on a schedule so closed ones do not sit around looking
+open.
+
+**Two taps from TikTok.** An iOS Shortcut puts StarScholar in your share sheet, so you
+never have to copy a link or leave the app you were scrolling.
+
+## What happens under the hood
+
+1. **It watches the video.** Not the caption, the video. Creators put the real
+   information in the audio and in text on screen, and leave bait in the caption. Gemini
+   watches the file and reads both.
+2. **It pulls out every opportunity.** One video often lists five. Each gets its own card.
+3. **It searches for the official page**, then crawls that site for the page that
+   actually holds the deadline and the application form.
+4. **It compares.** What the video claimed versus what the official page says, which is
+   where the badge and the "what the video got wrong" list come from.
+
+Results stream in as they finish, so you see what the video mentioned within a few
+seconds and each card fills itself in as its check completes, instead of watching one
+spinner for the whole thing.
+
+Three rules the code sticks to: a fact never comes from the video or from the model's
+memory, only from the official page. Anything the page does not state stays blank. And
+if the only pages found describe last year's cycle, it says so rather than showing you
+old dates as if they were current.
+
+## Running it yourself
 
 ```bash
 npm install
-copy .env.local.example .env.local   # then fill in your keys
 npm run dev
 ```
 
-You need two keys in `.env.local` — both free, no credit card:
+Two keys in `.env.local`, both free and neither needs a card:
 
-| Key | Where to get it |
+| Key | Where |
 |---|---|
-| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) → "Get API key" (free tier) |
-| `TAVILY_API_KEY` | [app.tavily.com](https://app.tavily.com) — 1,000 free searches/month |
+| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com), "Get API key" |
+| `TAVILY_API_KEY` | [app.tavily.com](https://app.tavily.com), 1,000 searches a month |
 
-`BRAVE_API_KEY` and `SERPER_API_KEY` also work (the search step auto-detects
-whichever is set). Optional: `GEMINI_MODEL` overrides the default
-`gemini-2.5-flash`.
+`BRAVE_API_KEY` and `SERPER_API_KEY` work too, whichever is set gets used. Check your
+Gemini key with `node --env-file=.env.local scripts/smoke-gemini.mjs`.
 
-Smoke-test your Gemini key any time with:
+**yt-dlp** (`winget install yt-dlp.yt-dlp`) is optional but makes a real difference. With
+it, videos whose captions are bait get downloaded and watched. Without it the app falls
+back to the caption and cover image, which is often enough but not always. Note that this
+step does not work on serverless hosts like Vercel, since those IPs get blocked.
 
-```bash
-node --env-file=.env.local scripts/smoke-gemini.mjs
+### Accounts, saved lists, and the directory
+
+Create a free project at [supabase.com](https://supabase.com), run
+[supabase/schema.sql](supabase/schema.sql) in its SQL Editor, then add
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from Project Settings, API.
+
+### Deadline emails and daily upkeep
+
+| Key | What it does |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | Lets the scheduled job read saved rows. A cron has no signed-in user, so row-level security hides everything from the normal key. Keep this secret. |
+| `RESEND_API_KEY` | Sending, via [resend.com](https://resend.com). Without it the job still runs and reports what it would have sent, so you can test first. |
+| `RECHECK_SECRET` | Any random string. Guards the scheduled endpoints. |
+| `NEXT_PUBLIC_SITE_URL` | Your deployed URL, used for links inside the emails. |
+
+[.github/workflows/daily.yml](.github/workflows/daily.yml) runs it once a day on GitHub
+Actions for free. Preview it without sending anything:
+
+```
+GET /api/remind?secret=<RECHECK_SECRET>&dry=1
 ```
 
-**Optional but recommended: yt-dlp** (`winget install yt-dlp.yt-dlp`). With it
-installed, videos whose captions are engagement bait ("comment for the link!")
-get downloaded and *watched* by Gemini — speech and on-screen text included.
-Without it, the pipeline still works from captions and cover images and the
-video rung is skipped automatically. If the binary isn't on the server's PATH,
-set `YTDLP_PATH=C:\path\to\yt-dlp.exe` in `.env.local`.
+## The API
 
-## How it's wired
+Everything goes through one endpoint, whether it came from the paste box, the Shortcut,
+or something else:
 
-Everything funnels into one endpoint:
+- `GET /api/check?url=<video>` returns one JSON object
+- `POST /api/check` with `{ url, caption? }` does the same, plus an optional caption you
+  typed yourself for when a platform blocks us
+- `POST /api/check` with `{ url, stream: true }` streams newline-delimited JSON, one
+  event per line. This is what the site uses.
 
-- `GET /api/check?url=<video url>` — the single front door (works for the paste box,
-  an iOS Shortcut, a future PWA share target, or a bot)
-- `POST /api/check` with `{ url, caption? }` — same thing, plus an optional pasted
-  caption for when the platform blocks automatic reading (Instagram often does)
-- `POST /api/check` with `{ url, stream: true }` — newline-delimited JSON, one event
-  per line (`meta`, then an `opportunity` per card, then `done`). The web UI uses this;
-  the plain forms return a single buffered JSON object and stay unchanged
+## Where the code lives
 
-Code map:
+| Path | What's in it |
+|---|---|
+| [src/lib/video.ts](src/lib/video.ts) | Caption and cover image from a URL |
+| [src/lib/videofile.ts](src/lib/videofile.ts) | Downloading the video with yt-dlp |
+| [src/lib/pipeline.ts](src/lib/pipeline.ts) | The Gemini calls, search, page fetching, crawling |
+| [src/lib/types.ts](src/lib/types.ts) | Zod schemas, shared by the API and the frontend |
+| [src/app/api/check/route.ts](src/app/api/check/route.ts) | Runs the whole thing and streams it |
+| [src/components/result-card.tsx](src/components/result-card.tsx) | The card |
+| [scripts/regression.mjs](scripts/regression.mjs) | Runs every known test video through the live pipeline |
 
-- [src/lib/video.ts](src/lib/video.ts) — pulls the caption + cover image via oEmbed (TikTok/YouTube) or `og:` meta tags (Instagram)
-- [src/lib/videofile.ts](src/lib/videofile.ts) — downloads the actual video with yt-dlp when the caption/cover aren't enough
-- [src/lib/pipeline.ts](src/lib/pipeline.ts) — the multimodal Gemini calls (extract from text/image/video → verify) + search (Tavily/Brave/Serper) + page scraping
-- [src/lib/types.ts](src/lib/types.ts) — Zod schemas used for the structured outputs and shared with the frontend
-- [src/app/api/check/route.ts](src/app/api/check/route.ts) — orchestrates the pipeline
-- [src/app/check/page.tsx](src/app/check/page.tsx) — the result card
-- [src/app/page.tsx](src/app/page.tsx) — landing page with paste box + Shortcut instructions
-
-## Accounts & My List (optional)
-
-Signed-in users get a private **My List**: every video they check is saved
-automatically (row-level security — only they can read their rows) so they can
-revisit cards without re-pasting links. Re-checking the same URL updates the
-saved card instead of duplicating it.
-
-To enable it (free, no card):
-
-1. Create a project at [supabase.com](https://supabase.com)
-2. Open the project's **SQL Editor**, paste [supabase/schema.sql](supabase/schema.sql), Run
-3. Copy **Project Settings → API** values into `.env.local`:
-   `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-Until those vars exist, the whole feature stays dormant and the app works
-exactly as before. Sign-in is passwordless (emailed magic link).
-
-## iOS Shortcut (two taps from inside TikTok)
-
-1. Shortcuts app → **+** → rename it "StarScholar"
-2. Shortcut settings → enable **Show in Share Sheet**, accept **URLs**
-3. Add one action: **Open URL** → `https://<your-deployment>/check?url=` + `Shortcut Input`
-4. Now: watch video → Share → StarScholar → verified card
-
-## Regression testing
-
-Every real video that ever exposed a bug lives in
-[scripts/test-links.json](scripts/test-links.json). Run the whole set through
-the pipeline any time:
-
-```bash
-node scripts/regression.mjs          # allows cache hits (fast, free)
-node scripts/regression.mjs --fresh  # full re-verification of every link
-```
-
-When a result looks wrong: add the link to `test-links.json`, fix the
-pipeline, and re-run the suite — a fix for one video must never break another.
-
-## Design principles
-
-- **Unknown means null, never a guess.** If the official page doesn't state a fact,
-  the card says "Not listed — check the official page."
-- **Every field comes from the verification scrape, not the video.** The video only
-  tells us what to search for.
-- **Social video is ephemeral input.** We extract facts and link back to the original —
-  we never download or rehost media.
+Built with Next.js, Gemini, Tavily, and Supabase.

@@ -1,0 +1,46 @@
+# Daily maintenance for the deployed site, free on GitHub Actions.
+#
+# Two jobs, both just HTTP calls into the app:
+#   /api/remind   emails deadline reminders and removes saved items whose
+#                 deadline has passed
+#   /api/recheck  re-verifies the stalest directory entries so statuses stay
+#                 honest (live links flip to expired the day they close)
+#
+# Setup, in the repo: Settings → Secrets and variables → Actions → New secret
+#   SITE_URL         https://your-app.vercel.app   (no trailing slash)
+#   RECHECK_SECRET   the same value as in the deployed app's env vars
+#
+# Until those exist the workflow simply skips, so it is safe to merge now.
+name: daily
+
+on:
+  schedule:
+    # 13:00 UTC ≈ 9am ET, a reminder that lands before school, not at 3am.
+    - cron: "0 13 * * *"
+  workflow_dispatch: # lets you trigger a run by hand from the Actions tab
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deadline reminders + expired cleanup
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          RECHECK_SECRET: ${{ secrets.RECHECK_SECRET }}
+        run: |
+          if [ -z "$SITE_URL" ] || [ -z "$RECHECK_SECRET" ]; then
+            echo "SITE_URL / RECHECK_SECRET not set, skipping."; exit 0
+          fi
+          curl -sS --fail-with-body --max-time 180 \
+            "$SITE_URL/api/remind?secret=$RECHECK_SECRET"
+
+      - name: Re-verify the stalest directory entries
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          RECHECK_SECRET: ${{ secrets.RECHECK_SECRET }}
+        run: |
+          if [ -z "$SITE_URL" ] || [ -z "$RECHECK_SECRET" ]; then
+            echo "SITE_URL / RECHECK_SECRET not set, skipping."; exit 0
+          fi
+          curl -sS --fail-with-body --max-time 300 \
+            "$SITE_URL/api/recheck?secret=$RECHECK_SECRET"

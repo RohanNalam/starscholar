@@ -19,7 +19,7 @@ export async function supabaseServer() {
             cookieStore.set(name, value, options)
           );
         } catch {
-          // called from a Server Component — safe to ignore, proxy refreshes sessions
+          // called from a Server Component, safe to ignore, proxy refreshes sessions
         }
       },
     },

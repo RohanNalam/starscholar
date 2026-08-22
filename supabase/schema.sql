@@ -12,6 +12,7 @@ create table if not exists public.lookups (
   organization text,
   deadline text,
   deadline_date date,             -- machine-readable deadline; drives auto-cleanup
+  reminder_stage smallint,        -- last deadline-reminder milestone emailed (7 or 1 days out)
   created_at timestamptz not null default now(),
   -- one row per opportunity: a single video can list several, so uniqueness is
   -- per (user, video, program name). Re-checking updates instead of duplicating.
@@ -23,6 +24,9 @@ create table if not exists public.lookups (
 --
 -- alter table public.lookups drop constraint if exists lookups_user_id_video_url_key;
 -- alter table public.lookups add constraint lookups_user_video_name_key unique (user_id, video_url, name);
+
+-- ── Migration: deadline reminders (run once if the table already existed) ─────
+-- alter table public.lookups add column if not exists reminder_stage smallint;
 
 -- Row-level security: the database itself guarantees users only ever see their own rows.
 alter table public.lookups enable row level security;
@@ -49,7 +53,7 @@ create index if not exists lookups_user_created_idx
 -- ── Shared opportunity directory (Phase 2) ──────────────────────────────────
 -- Every lookup any user runs is cached here: repeat URLs are instant and free,
 -- and the browsable directory compounds with every user. Expired entries are
--- archived (status flip), never deleted — cycles recur annually.
+-- archived (status flip), never deleted, cycles recur annually.
 
 create table if not exists public.opportunities (
   id uuid primary key default gen_random_uuid(),

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StarScholar — the link they never put in the caption",
+  title: "StarScholar, the link they never put in the caption",
   description:
     "Paste any TikTok, Reel, or Short about a scholarship, internship, or summer program and get the verified application link, real deadline, and step-by-step checklist.",
 };

@@ -14,10 +14,10 @@ import { ResultCard } from "@/components/result-card";
 import { AuthNav } from "@/components/auth-nav";
 
 const LOADING_STEPS = [
-  "Fetching the video…",
-  "Watching it — the details are usually in the audio…",
-  "Reading the on-screen text…",
-  "Working out which opportunities it names…",
+  "Grabbing the video…",
+  "Listening to it, since that's usually where they hide the details…",
+  "Reading the text on screen…",
+  "Working out what it's actually talking about…",
 ];
 
 function CheckInner() {
@@ -63,7 +63,7 @@ function CheckInner() {
           const { done, value } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
-          // the last piece may be a partial line — keep it for the next chunk
+          // the last piece may be a partial line, keep it for the next chunk
           const lines = buffer.split("\n");
           buffer = lines.pop() ?? "";
           for (const line of lines) {
@@ -90,7 +90,7 @@ function CheckInner() {
           }
         }
       } catch {
-        setError({ ok: false, error: "Network error — is the server running?" });
+        setError({ ok: false, error: "Couldn't reach the server. Is it running?" });
       } finally {
         clearInterval(stepTimer);
         setLoading(false);
@@ -122,7 +122,7 @@ function CheckInner() {
           <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent opacity-60" />
           <p className="text-lg font-medium">{LOADING_STEPS[step]}</p>
           <p className="mt-2 text-sm opacity-60">
-            Results appear one by one as each is verified.
+            Each one shows up as soon as we&apos;ve checked it.
           </p>
         </div>
       )}
@@ -157,12 +157,12 @@ function CheckInner() {
             We couldn&apos;t tell which opportunity this video is about.
           </p>
           {meta?.caption && (
-            <p className="mt-2 text-sm opacity-60">Caption we read: “{meta.caption}”</p>
+            <p className="mt-2 text-sm opacity-60">What the caption said: “{meta.caption}”</p>
           )}
           <p className="mt-4 text-sm opacity-70">
-            Creators often keep the details in the audio (&quot;comment for the link!&quot;).
-            Type what the video mentioned — program name, company, anything — and
-            we&apos;ll hunt down the official page:
+            A lot of creators keep the details in the audio and just say &quot;comment for the
+            link!&quot;. Type whatever the video mentioned, like the program name or the
+            company, and we&apos;ll go find the official page:
           </p>
           <textarea
             value={pastedCaption}
@@ -186,12 +186,12 @@ function CheckInner() {
           {cards.length > 1 && (
             <p className="mb-4 text-sm font-semibold opacity-80">
               This video mentions {cards.length} opportunities
-              {!finished && ` · verified ${cards.filter(Boolean).length} of ${cards.length}`}
+              {!finished && ` · checked ${cards.filter(Boolean).length} so far`}
             </p>
           )}
           <div className="space-y-6">
             {cards.map((opp, i) => {
-              // still verifying — show what the video claimed so the wait has
+              // still verifying, show what the video claimed so the wait has
               // something to read instead of a blank spinner
               if (!opp) {
                 const c = claimed[i];
@@ -228,7 +228,7 @@ function CheckInner() {
                   <p className="font-medium">
                     The video mentioned “
                     {opp.claimed.program_name ?? opp.claimed.organization ?? "an opportunity"}”
-                    but we couldn&apos;t confirm an official page for it.
+                    but we couldn&apos;t find an official page to back it up.
                   </p>
                   <a
                     href={`https://www.google.com/search?q=${encodeURIComponent(opp.claimed.search_query)}`}
@@ -245,7 +245,7 @@ function CheckInner() {
           {finished && (
             <>
               <p className="mt-4 text-center text-xs opacity-60">
-                {meta?.analyzedWith && <>Identified from {meta.analyzedWith}</>}
+                {meta?.analyzedWith && <>Read from {meta.analyzedWith}</>}
                 {meta?.analyzedWith && cards.some((o) => o?.saved) && " · "}
                 {cards.some((o) => o?.saved) && (
                   <>

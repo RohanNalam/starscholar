@@ -21,7 +21,7 @@ const schema = z.object({
 });
 
 const caption =
-  "$25,000 and NO essay?! The Coca-Cola Scholars Program is OPEN for high school seniors 🎓 deadline in October — don't sleep on this #scholarship #classof2027";
+  "$25,000 and NO essay?! The Coca-Cola Scholars Program is OPEN for high school seniors 🎓 deadline in October, don't sleep on this #scholarship #classof2027";
 
 async function tryMode(label, opts) {
   try {
@@ -31,7 +31,7 @@ async function tryMode(label, opts) {
       contents: caption,
       config: {
         systemInstruction:
-          "Extract structured facts about the opportunity in this video caption. A field the text doesn't state is null — never guess.",
+          "Extract structured facts about the opportunity in this video caption. A field the text doesn't state is null, never guess.",
         responseMimeType: "application/json",
         responseJsonSchema: z.toJSONSchema(schema),
       },
@@ -41,7 +41,7 @@ async function tryMode(label, opts) {
     console.log(JSON.stringify(parsed, null, 2));
     return true;
   } catch (e) {
-    console.error(`${label}: FAILED — ${e?.message ?? e}`);
+    console.error(`${label}: FAILED, ${e?.message ?? e}`);
     return false;
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable react/no-unknown-property */
-// Adapted from React Bits <Dither /> — wrapEffect replaced with a <primitive>
+// Adapted from React Bits <Dither />, wrapEffect replaced with a <primitive>
 // effect instance for @react-three/postprocessing v3 (React 19 / fiber v9).
 import { useRef, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';

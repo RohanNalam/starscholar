@@ -1,5 +1,5 @@
 "use client";
-// Adapted from React Bits <MagicBento /> — card content comes from a `cards`
+// Adapted from React Bits <MagicBento />, card content comes from a `cards`
 // prop (defaults to StarScholar's feature set) instead of hardcoded demo data.
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
@@ -15,39 +15,39 @@ const DEFAULT_CARDS = [
     color: '#120F17',
     label: 'Step 1',
     title: 'Paste the link',
-    description: 'Share any opportunity video from TikTok, Instagram, or YouTube — or use the share sheet.'
+    description: 'Drop in any video from TikTok, Instagram, or YouTube. Or just hit share and send it straight over.'
   },
   {
     color: '#120F17',
     label: 'Step 2',
     title: 'We verify it',
-    description: 'We read the video, hunt down the official page, and cross-check every claim in real time.'
+    description: 'We watch the video, track down the official page, and check whether it actually says what the video said.'
   },
   {
     color: '#120F17',
     label: 'Step 3',
     title: 'Apply for real',
     description:
-      'The direct application link, the true deadline, eligibility, and a step-by-step checklist — every fact pulled from the official site, stamped with the date we checked it.'
+      'The real application link, the real deadline, who can apply, and what you have to do. All of it comes off the official site, with the date we looked.'
   },
   {
     color: '#120F17',
     label: 'Fact-check',
     title: '🟢 🟡 🔴 Every result gets a badge',
     description:
-      'Verified: the official page matches the video. Exaggerated: the video left something out — like a GPA requirement. Expired: the application already closed. No more clickbait.'
+      'Verified means the official page backs up the video. Exaggerated means they skipped something, like a GPA cutoff. Expired means it already closed.'
   },
   {
     color: '#120F17',
     label: 'My List',
     title: 'Private saves',
-    description: 'Sign in once and every video you check saves to your own private list automatically.'
+    description: 'Sign in once and everything you look up saves to your own list. Nobody else can see it.'
   },
   {
     color: '#120F17',
     label: 'iPhone',
     title: 'Two taps from TikTok',
-    description: 'Add the Shortcut once — StarScholar lives in your share sheet forever.'
+    description: 'Add the Shortcut once and StarScholar sits in your share sheet for good.'
   }
 ];
 
