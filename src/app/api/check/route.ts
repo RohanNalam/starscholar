@@ -8,7 +8,7 @@ import {
   hasSearchProvider,
   type SourcePage,
 } from "@/lib/pipeline";
-import { downloadVideo } from "@/lib/videofile";
+import { downloadVideo, downloadCarousel } from "@/lib/videofile";
 import type {
   CheckResult,
   CheckError,
@@ -20,7 +20,11 @@ import type {
 } from "@/lib/types";
 import { supabaseServer } from "@/lib/supabase/server";
 
-export const maxDuration = 120; // the video-watching rung needs headroom
+// A real lookup on the deployed site measured 68s (scrape, watch, verify), and
+// a carousel with several slides runs longer. 300 is the ceiling Vercel allows
+// on Hobby with Fluid Compute enabled, which this project has. Without Fluid
+// the platform kills every function at 60s no matter what this says.
+export const maxDuration = 300;
 
 const MAX_OPPORTUNITIES = 5; // per video, bounds search credits and latency
 
@@ -110,7 +114,7 @@ async function* runCheck(
   // Primary rung: the model watches the actual video (plus the caption).
   if (file) {
     extraction = await extractOpportunity(caption, video.author, {
-      part: { inlineData: { mimeType: file.mimeType, data: file.base64 } },
+      parts: [{ inlineData: { mimeType: file.mimeType, data: file.base64 } }],
       kind: "video",
     });
     analyzedWith = "the full video (audio + on-screen text)";
@@ -125,7 +129,7 @@ async function* runCheck(
       const fromMeta = await extractOpportunity(
         caption,
         video.author,
-        thumbPart ? { part: thumbPart, kind: "image" } : undefined
+        thumbPart ? { parts: [thumbPart], kind: "image" } : undefined
       );
       if (hasOpps(fromMeta) || !extraction) {
         extraction = fromMeta;
@@ -137,6 +141,28 @@ async function* runCheck(
               : "the caption";
       }
     }
+    timer.mark("caption+cover");
+  }
+
+  // Last rung: swipeable carousels. The opportunities are written on slides 2,
+  // 3, 4, and the only image a post exposes publicly is the cover, so nothing
+  // above can see them. This costs a scrape, which is why it runs only after
+  // every free route has come up empty.
+  if (!hasOpps(extraction)) {
+    const slides = await downloadCarousel(videoUrl);
+    if (slides && slides.length > 0) {
+      const fromSlides = await extractOpportunity(caption, video.author, {
+        parts: slides.map((s) => ({
+          inlineData: { mimeType: s.mimeType, data: s.base64 },
+        })),
+        kind: "slides",
+      });
+      if (hasOpps(fromSlides) || !extraction) {
+        extraction = fromSlides;
+        analyzedWith = `all ${slides.length} slides of the carousel`;
+      }
+    }
+    timer.mark("carousel");
   }
 
   if (!extraction) {

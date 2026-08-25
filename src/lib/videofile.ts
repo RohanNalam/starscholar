@@ -179,10 +179,89 @@ function findVideoUrl(node: unknown, depth = 0): string | null {
   return null;
 }
 
+// Carousels ("swipe for the list") are the other half of this problem: there is
+// no video at all, the opportunities are written on slides 2, 3, 4, and the only
+// image the page exposes publicly is the cover. Apify returns every slide.
+export async function downloadCarousel(url: string): Promise<VideoFile[] | null> {
+  const items = await runApifyActor(url);
+  if (!items) return null;
+
+  const urls = findImageUrls(items).slice(0, MAX_SLIDES);
+  if (urls.length === 0) return null;
+
+  const slides: VideoFile[] = [];
+  let total = 0;
+  for (const u of urls) {
+    const img = await fetchMediaBytes(u, "image/jpeg");
+    if (!img) continue;
+    total += img.base64.length;
+    if (total > MAX_BYTES) break; // stay under Gemini's inline request cap
+    slides.push(img);
+  }
+  return slides.length > 0 ? slides : null;
+}
+
+const MAX_SLIDES = 8;
+
+// The official actor puts carousel slides in `images`, and some actors use
+// `childPosts[].displayUrl` instead. Both are handled, in that order.
+function findImageUrls(items: unknown): string[] {
+  const out: string[] = [];
+  const push = (v: unknown) => {
+    if (typeof v === "string" && /^https?:\/\//.test(v) && !out.includes(v)) out.push(v);
+  };
+  const visit = (node: unknown, depth = 0) => {
+    if (depth > 5 || node === null || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      node.forEach((n) => visit(n, depth + 1));
+      return;
+    }
+    const rec = node as Record<string, unknown>;
+    if (Array.isArray(rec.images)) rec.images.forEach(push);
+    if (Array.isArray(rec.childPosts)) {
+      for (const child of rec.childPosts) {
+        if (child && typeof child === "object") {
+          push((child as Record<string, unknown>).displayUrl);
+        }
+      }
+    }
+    if (out.length === 0) push(rec.displayUrl); // single-image post
+    for (const v of Object.values(rec)) visit(v, depth + 1);
+  };
+  visit(items);
+  return out;
+}
+
 async function downloadViaApify(url: string): Promise<VideoFile | null> {
+  const items = await runApifyActor(url);
+  if (!items) return null;
+  const videoUrl = findVideoUrl(items);
+  if (!videoUrl) return null;
+  return fetchMediaBytes(videoUrl, "video/mp4");
+}
+
+// One Apify run, shared by the video and carousel paths. Runs are billed per
+// result, so the same post must never be scraped twice in one lookup: the
+// video path asks first, and the carousel path reuses whatever came back.
+const apifyRuns = new Map<string, { at: number; value: Promise<unknown | null> }>();
+const APIFY_TTL_MS = 10 * 60 * 1000;
+
+async function runApifyActor(url: string): Promise<unknown | null> {
+  const hit = apifyRuns.get(url);
+  if (hit && Date.now() - hit.at < APIFY_TTL_MS) return hit.value;
+  const value = runApifyActorUncached(url);
+  apifyRuns.set(url, { at: Date.now(), value });
+  value.catch(() => apifyRuns.delete(url));
+  return value;
+}
+
+async function runApifyActorUncached(url: string): Promise<unknown | null> {
   const token = process.env.APIFY_TOKEN;
   const actor = actorFor(url);
   if (!token || !actor) return null;
+
+  // ?img_index=2 asks for one slide; drop it so the actor returns all of them.
+  const postUrl = url.split("?")[0];
 
   try {
     // run-sync-get-dataset-items runs the actor and returns its output in one
@@ -197,8 +276,8 @@ async function downloadViaApify(url: string): Promise<VideoFile | null> {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          directUrls: [url],
-          urls: [url], // some actors name the input differently
+          directUrls: [postUrl],
+          urls: [postUrl], // some actors name the input differently
           resultsType: "posts",
           resultsLimit: 1,
         }),
@@ -209,36 +288,30 @@ async function downloadViaApify(url: string): Promise<VideoFile | null> {
       console.warn(`Apify ${actor} failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
       return null;
     }
-
-    const videoUrl = findVideoUrl(await res.json());
-    if (!videoUrl) {
-      console.warn(`Apify ${actor} returned no video URL for ${url}`);
-      return null;
-    }
-    return fetchVideoBytes(videoUrl);
+    return await res.json();
   } catch (e) {
     console.warn("Apify lookup failed:", e instanceof Error ? e.message : e);
     return null;
   }
 }
 
-// The CDN link Apify hands back is signed and fetchable from anywhere, so this
-// part works fine from a serverless host.
-async function fetchVideoBytes(videoUrl: string): Promise<VideoFile | null> {
+// The CDN links Apify hands back are signed and fetchable from anywhere, so
+// this part works fine from a serverless host.
+async function fetchMediaBytes(url: string, fallbackMime: string): Promise<VideoFile | null> {
   try {
-    const res = await fetch(videoUrl, { signal: AbortSignal.timeout(45000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(45000) });
     if (!res.ok) return null;
     const type = res.headers.get("content-type")?.split(";")[0] ?? "";
-    const mimeType = type.startsWith("video/") || type.startsWith("audio/") ? type : "video/mp4";
+    const mimeType = /^(video|audio|image)\//.test(type) ? type : fallbackMime;
 
     const buf = Buffer.from(await res.arrayBuffer());
     if (buf.length === 0 || buf.length > MAX_BYTES) {
-      console.warn(`video is ${(buf.length / 1e6).toFixed(1)}MB, too big to inline`);
+      console.warn(`media is ${(buf.length / 1e6).toFixed(1)}MB, too big to inline`);
       return null;
     }
     return { base64: buf.toString("base64"), mimeType };
   } catch (e) {
-    console.warn("fetching the video file failed:", e instanceof Error ? e.message : e);
+    console.warn("fetching the media file failed:", e instanceof Error ? e.message : e);
     return null;
   }
 }

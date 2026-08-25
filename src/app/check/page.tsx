@@ -90,7 +90,13 @@ function CheckInner() {
           }
         }
       } catch {
-        setError({ ok: false, error: "Couldn't reach the server. Is it running?" });
+        // Reached on a dropped connection or a lookup that ran out of time.
+        // It used to say "is the server running?", which is nonsense advice
+        // for someone on their phone looking at the deployed site.
+        setError({
+          ok: false,
+          error: "That lookup didn't finish. It may have taken too long, give it another go.",
+        });
       } finally {
         clearInterval(stepTimer);
         setLoading(false);

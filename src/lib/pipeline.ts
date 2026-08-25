@@ -147,7 +147,7 @@ async function generateStructured<T>(
 
 // ── Step 1: extract the opportunity from whatever we have ───────────────────
 // Escalation ladder: caption → caption + cover image → the full video file.
-export type ExtractionMedia = { part: Part; kind: "image" | "video" };
+export type ExtractionMedia = { parts: Part[]; kind: "image" | "video" | "slides" };
 
 export async function extractOpportunity(
   caption: string | null,
@@ -157,12 +157,14 @@ export async function extractOpportunity(
   const mediaNote =
     media?.kind === "video"
       ? "You are given the actual video file. Watch it: use the spoken audio, every on-screen text overlay, and anything shown visually. Captions are often engagement bait ('comment for the link!') while the real details are spoken or shown on screen. "
-      : media?.kind === "image"
-        ? "You are given the video's cover image, read any text overlaid on it; creators usually put the hook there. "
-        : "";
+      : media?.kind === "slides"
+        ? `You are given all ${media.parts.length} slides of an image carousel, in order. These posts are usually a list ('swipe for 7 paid internships'), with one opportunity per slide and the first slide being only a title. Read the text on EVERY slide and return an entry for each opportunity, however many that is. `
+        : media?.kind === "image"
+          ? "You are given the video's cover image, read any text overlaid on it; creators usually put the hook there. "
+          : "";
 
   const parts: Part[] = [];
-  if (media) parts.push(media.part);
+  if (media) parts.push(...media.parts);
   parts.push({
     text:
       `Video caption${author ? ` (posted by ${author})` : ""}: ` +
