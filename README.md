@@ -109,10 +109,33 @@ Two keys in `.env.local`, both free and neither needs a card:
 `BRAVE_API_KEY` and `SERPER_API_KEY` work too, whichever is set gets used. Check your
 Gemini key with `node --env-file=.env.local scripts/smoke-gemini.mjs`.
 
-**yt-dlp** (`winget install yt-dlp.yt-dlp`) is optional but makes a real difference. With
-it, videos whose captions are bait get downloaded and watched. Without it the app falls
-back to the caption and cover image, which is often enough but not always. Note that this
-step does not work on serverless hosts like Vercel, since those IPs get blocked.
+### Watching the video
+
+This is the rung that matters, because a creator who says "comment for the link" has put
+everything you need in the audio. There are two ways to get the file, and the app tries
+them in that order.
+
+**yt-dlp** (`winget install yt-dlp.yt-dlp`) is free and fast, and it is all you need
+while developing. It will not work on a deployed server: Instagram and TikTok block
+datacenter IP ranges, and every serverless host runs on those.
+
+**Apify** is the answer for anything deployed. It is a hosted scraping service with its
+own proxy pool, so the request does not come from a blocked address. Sign up at
+[apify.com](https://apify.com), take the token from Settings, Integrations, and set:
+
+| Key | Notes |
+|---|---|
+| `APIFY_TOKEN` | The only one required |
+| `APIFY_INSTAGRAM_ACTOR` | Optional, defaults to `apify~instagram-scraper` |
+| `APIFY_TIKTOK_ACTOR` | Optional, defaults to `clockworks~tiktok-scraper` |
+
+The free plan gives $5 of credit every month and needs no card. Reel scraping runs about
+$1 per thousand, so that covers a few thousand lookups a month. The actor IDs are
+configurable because the best one for a platform changes over time, and swapping it
+should not need a code change.
+
+With neither of these the app still runs, it just falls back to the caption and cover
+image, and asks you to type what the video said when the caption is pure bait.
 
 ### Accounts, saved lists, and the directory
 
